@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-12-02T23:15:00.017Z",
+  "tables": [
+    "events",
+    "categories",
+    "cities",
+    "organizers",
+    "venues",
+    "tickets",
+    "ticket_types",
+    "users",
+    "profiles",
+    "favorites",
+    "orders",
+    "payments",
+    "bookings",
+    "attendees",
+    "event_categories"
+  ],
+  "summary": "Se encontraron 15 tablas en Supabase"
+}
