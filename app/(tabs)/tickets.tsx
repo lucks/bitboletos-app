@@ -3,13 +3,13 @@ import { Colors, Layout, Spacing, Typography } from '@/lib/constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'upcoming' | 'past';
 

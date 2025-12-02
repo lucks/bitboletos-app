@@ -2,14 +2,14 @@ import { BorderRadius, Colors, Layout, Spacing, Typography } from '@/lib/constan
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
