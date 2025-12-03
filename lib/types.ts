@@ -21,13 +21,13 @@ export interface Event {
   city_id: string;
   category_id?: string; // Opcional porque puede usar event_categories
   organizer_id: string;
-  venue_id?: string; // Nueva: relación con venues
+
 
   // Populated relations
   city?: City;
   category?: Category;
   organizer?: Organizer;
-  venue?: Venue;
+  venue?: string;
   ticket_types?: TicketType[];
   categories?: Category[]; // Para relación muchos a muchos
   created_at?: string;

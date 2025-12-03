@@ -1,13 +1,16 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { BorderRadius, Colors, Layout, Spacing, Typography } from '@/lib/constants';
+import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback } from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -55,7 +58,65 @@ const MenuItem = ({
 );
 
 export default function ProfileScreen() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [darkMode, setDarkMode] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+  const [profile, setProfile] = React.useState<any>(null);
+  const [stats, setStats] = React.useState({
+    events: 0,
+    tickets: 0,
+    favorites: 0,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        fetchProfile();
+        fetchStats();
+      }
+    }, [user])
+  );
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    if (!user) return;
+    
+    // Fetch tickets count
+    const { count: ticketsCount } = await supabase
+      .from('tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    // Fetch favorites count
+    const { count: favoritesCount } = await supabase
+      .from('favorites')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    setStats(prev => ({
+      ...prev,
+      tickets: ticketsCount || 0,
+      favorites: favoritesCount || 0
+    }));
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -71,10 +132,13 @@ export default function ProfileScreen() {
             <Ionicons name="person" size={40} color={Colors.primary} />
           </View>
           
-          <Text style={styles.name}>Usuario</Text>
-          <Text style={styles.email}>usuario@email.com</Text>
+          <Text style={styles.name}>{profile?.name || 'Usuario'}</Text>
+          <Text style={styles.email}>{user?.email || 'usuario@email.com'}</Text>
           
-          <TouchableOpacity style={styles.editButton}>
+          <TouchableOpacity 
+            style={styles.editButton} 
+            onPress={() => router.push('/profile/edit')}
+          >
             <Text style={styles.editButtonText}>Editar Perfil</Text>
           </TouchableOpacity>
         </View>
@@ -82,21 +146,21 @@ export default function ProfileScreen() {
         {/* Statistics */}
         <View style={styles.stats}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statValue}>{stats.events}</Text>
             <Text style={styles.statLabel}>Eventos</Text>
           </View>
           
           <View style={styles.statDivider} />
           
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statValue}>{stats.tickets}</Text>
             <Text style={styles.statLabel}>Boletos</Text>
           </View>
           
           <View style={styles.statDivider} />
           
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statValue}>{stats.favorites}</Text>
             <Text style={styles.statLabel}>Favoritos</Text>
           </View>
         </View>
@@ -172,7 +236,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => supabase.auth.signOut()}>
           <Ionicons name="log-out-outline" size={20} color={Colors.error} />
           <Text style={styles.logoutText}>Cerrar Sesión</Text>
         </TouchableOpacity>

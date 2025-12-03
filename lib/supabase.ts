@@ -79,8 +79,7 @@ export const getFeaturedEvents = async (limit = 10) => {
       *,
       city:cities(*),
       category:categories(*),
-      organizer:organizers(*),
-      venue:venues(*)
+      organizer:organizers(*)
     `)
     .eq('is_featured', true)
     .eq('is_live', true)
@@ -102,8 +101,7 @@ export const getUpcomingEvents = async (cityId: string, limit = 20) => {
       *,
       city:cities(*),
       category:categories(*),
-      organizer:organizers(*),
-      venue:venues(*)
+      organizer:organizers(*)
     `)
     .eq('city_id', cityId)
     .eq('is_live', true)
@@ -125,8 +123,7 @@ export const getAllEvents = async (limit = 50) => {
       *,
       city:cities(*),
       category:categories(*),
-      organizer:organizers(*),
-      venue:venues(*)
+      organizer:organizers(*)
     `)
     .eq('is_live', true)
     .order('date', { ascending: true })
@@ -147,7 +144,6 @@ export const getEventById = async (eventId: string) => {
       city:cities(*),
       category:categories(*),
       organizer:organizers(*),
-      venue:venues(*),
       ticket_types:ticket_types(*)
     `)
     .eq('id', eventId)
@@ -177,8 +173,7 @@ export const searchEvents = async (
       *,
       city:cities(*),
       category:categories(*),
-      organizer:organizers(*),
-      venue:venues(*)
+      organizer:organizers(*)
     `)
     .eq('is_live', true);
 

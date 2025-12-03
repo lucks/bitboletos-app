@@ -1,11 +1,21 @@
 import CategoryChip from '@/components/events/CategoryChip';
 import EventCard from '@/components/events/EventCard';
 import EventCardHorizontal from '@/components/events/EventCardHorizontal';
+import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Layout, Spacing, Typography } from '@/lib/constants';
-import { getFeaturedMockEvents, getUpcomingMockEvents, mockCategories, mockCities, mockEvents } from '@/lib/mockData';
-import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 import {
+    getAllEvents,
+    getCategories,
+    getCities,
+    getFeaturedEvents,
+    getUpcomingEvents,
+    supabase
+} from '@/lib/supabase';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
     FlatList,
     ScrollView,
     StyleSheet,
@@ -16,11 +26,89 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
-  const [selectedCity, setSelectedCity] = useState(mockCities[0]);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string>('Usuario');
+  
+  // Data states
+  const [cities, setCities] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [featuredEvents, setFeaturedEvents] = useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [recommendedEvents, setRecommendedEvents] = useState<any[]>([]);
+  
+  // Selection states
+  const [selectedCity, setSelectedCity] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const featuredEvents = getFeaturedMockEvents();
-  const upcomingEvents = getUpcomingMockEvents(selectedCity.id);
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCity) {
+      loadUpcomingEvents(selectedCity.id);
+    }
+  }, [selectedCity]);
+
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      const [citiesData, categoriesData, featuredData, allEventsData] = await Promise.all([
+        getCities(),
+        getCategories(),
+        getFeaturedEvents(),
+        getAllEvents(4) // Get 4 events for recommendations
+      ]);
+
+      setCities(citiesData || []);
+      setCategories(categoriesData || []);
+      setFeaturedEvents(featuredData || []);
+      setRecommendedEvents(allEventsData || []);
+
+      // Set default city if available
+      if (citiesData && citiesData.length > 0) {
+        setSelectedCity(citiesData[0]);
+      }
+    } catch (error) {
+      console.error('Error loading home data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadUpcomingEvents = async (cityId: string) => {
+    try {
+      const data = await getUpcomingEvents(cityId);
+      setUpcomingEvents(data || []);
+    } catch (error) {
+      console.error('Error loading upcoming events:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        fetchProfile();
+      }
+    }, [user])
+  );
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (data && data.name) {
+        setUserName(data.name);
+      }
+    } catch (error) {
+      // Silent error for profile fetch
+    }
+  };
 
   const handleEventPress = (eventId: string) => {
     // TODO: Navigate to event detail screen
@@ -37,6 +125,14 @@ export default function HomeScreen() {
     console.log('Search pressed');
   };
 
+  if (loading && !selectedCity) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -45,7 +141,7 @@ export default function HomeScreen() {
           <View style={styles.headerTop}>
             <TouchableOpacity style={styles.citySelector}>
               <Ionicons name="location" size={16} color={Colors.primary} />
-              <Text style={styles.cityText}>{selectedCity.name}</Text>
+              <Text style={styles.cityText}>{selectedCity?.name || 'Seleccionar Ciudad'}</Text>
               <Ionicons name="chevron-down" size={16} color={Colors.textSecondary} />
             </TouchableOpacity>
             
@@ -57,7 +153,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.greeting}>Hola, Usuario 👋</Text>
+          <Text style={styles.greeting}>Hola, {userName} 👋</Text>
           <Text style={styles.subtitle}>¿Qué evento te gustaría vivir hoy?</Text>
         </View>
 
@@ -71,7 +167,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <FlatList
             horizontal
-            data={mockCategories}
+            data={categories}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <CategoryChip
@@ -131,7 +227,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Recomendados para ti</Text>
           
           <View style={styles.recommendedGrid}>
-            {mockEvents.slice(0, 4).map((event) => (
+            {recommendedEvents.map((event) => (
               <View key={event.id} style={styles.gridItem}>
                 <EventCardHorizontal
                   event={event}
