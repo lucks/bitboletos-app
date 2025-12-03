@@ -4,24 +4,24 @@ import EventCardHorizontal from '@/components/events/EventCardHorizontal';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Layout, Spacing, Typography } from '@/lib/constants';
 import {
-    getAllEvents,
-    getCategories,
-    getCities,
-    getFeaturedEvents,
-    getUpcomingEvents,
-    supabase
+  getAllEvents,
+  getCategories,
+  getCities,
+  getFeaturedEvents,
+  getUpcomingEvents,
+  supabase
 } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -117,8 +117,17 @@ export default function HomeScreen() {
 
   const handleCategoryPress = (categoryId: string) => {
     setSelectedCategory(selectedCategory === categoryId ? null : categoryId);
-    // TODO: Filter events by category
   };
+
+  // Filter events by selected category
+  const filterEventsByCategory = (events: any[]) => {
+    if (!selectedCategory) return events;
+    return events.filter(event => event.category_id === selectedCategory);
+  };
+
+  const filteredFeaturedEvents = filterEventsByCategory(featuredEvents);
+  const filteredUpcomingEvents = filterEventsByCategory(upcomingEvents);
+  const filteredRecommendedEvents = filterEventsByCategory(recommendedEvents);
 
   const handleSearchPress = () => {
     // TODO: Navigate to explore/search screen
@@ -192,7 +201,7 @@ export default function HomeScreen() {
           
           <FlatList
             horizontal
-            data={featuredEvents}
+            data={filteredFeaturedEvents}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <EventCard
@@ -212,7 +221,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Próximos en tu ciudad</Text>
           
           <View style={styles.upcomingEvents}>
-            {upcomingEvents.slice(0, 5).map((event) => (
+            {filteredUpcomingEvents.slice(0, 5).map((event) => (
               <EventCardHorizontal
                 key={event.id}
                 event={event}
@@ -227,7 +236,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Recomendados para ti</Text>
           
           <View style={styles.recommendedGrid}>
-            {recommendedEvents.map((event) => (
+            {filteredRecommendedEvents.map((event) => (
               <View key={event.id} style={styles.gridItem}>
                 <EventCardHorizontal
                   event={event}
